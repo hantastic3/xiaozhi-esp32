@@ -4,6 +4,7 @@
 #include "application.h"
 #include "button.h"
 #include "config.h"
+#include "mcp_server.h"
 #include "led/single_led.h"
 
 #include <esp_log.h>
@@ -116,12 +117,28 @@ private:
         });
     }
 
+    void InitializeTools() {
+        auto& mcp_server = McpServer::GetInstance();
+        mcp_server.AddTool("self.remote_wakeup",
+            "Wake up the device remotely and start a voice conversation. "
+            "Does nothing if a conversation is already in progress.",
+            PropertyList(),
+            [](const PropertyList& properties) -> ReturnValue {
+                auto& app = Application::GetInstance();
+                if (app.GetDeviceState() == kDeviceStateIdle) {
+                    app.ToggleChatState();
+                }
+                return true;
+            });
+    }
+
 public:
-    MovecallMojiESP32S3() : boot_button_(BOOT_BUTTON_GPIO) {  
+    MovecallMojiESP32S3() : boot_button_(BOOT_BUTTON_GPIO) {
         InitializeCodecI2c();
         InitializeSpi();
         InitializeGc9a01Display();
         InitializeButtons();
+        InitializeTools();
         GetBacklight()->RestoreBrightness();
     }
 
