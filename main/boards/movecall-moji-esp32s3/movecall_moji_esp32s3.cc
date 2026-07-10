@@ -125,9 +125,18 @@ private:
             PropertyList(),
             [](const PropertyList& properties) -> ReturnValue {
                 auto& app = Application::GetInstance();
-                if (app.GetDeviceState() == kDeviceStateIdle) {
-                    app.ToggleChatState();
+                if (app.GetDeviceState() != kDeviceStateIdle) {
+                    return false;
                 }
+                // Use the same wake-word invocation path as a physical wake word
+                // trigger, so the server receives an explicit "listen/detect"
+                // notification and knows a proactive session has started
+                // (plain ToggleChatState() opens the channel but sends no such
+                // signal, so a TTS push right after waking up gets dropped).
+                // Passing the configured wake phrase itself (rather than an
+                // arbitrary string) makes the server match it against its
+                // wakeup_words list and reply with its normal wake greeting.
+                app.WakeWordInvoke("你好小智");
                 return true;
             });
     }
